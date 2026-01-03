@@ -33,6 +33,11 @@ try:
 except LookupError:
     nltk.download('punkt')
 
+try:
+    nltk.data.find('tokenizers/punkt_tab')
+except LookupError:
+    nltk.download('punkt_tab')
+
 
 # ============================================================================
 # Data Reading Functions
@@ -527,8 +532,10 @@ def process_all_documents(docs_df, output_table: str = None):
         chunks_df.write.format("delta") \
             .mode("overwrite") \
             .option("overwriteSchema", "true") \
+            .option("delta.enableChangeDataFeed", "true") \
             .saveAsTable(output_table)
         print(f"Saved processed chunks to {output_table}")
+        print(f"Change Data Feed enabled for vector index creation")
     
     return chunks_df
 
