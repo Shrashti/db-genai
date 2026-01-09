@@ -180,30 +180,56 @@ class DatabricksDocAgent:
         self.memory = ConversationMemory(max_history=max_conversation_history)
         self.metrics = GuardrailMetrics()
         
-        # System prompt for the agent
+        # System prompt for the agent - Enhanced for better tool usage
         self.system_prompt = """You are a Databricks documentation expert assistant.
 
-IMPORTANT INSTRUCTIONS:
-1. Use the retrieval tools to find accurate information from Databricks documentation
-2. Answer questions clearly, concisely, and accurately
-3. ALWAYS include citations with URLs for every piece of information you provide
-4. Format citations as numbered references [1], [2], etc.
-5. List all source URLs at the end of your response
-6. If you're unsure or don't have enough information, say so
-7. Stay focused on Databricks-related topics only
+🔴 CRITICAL REQUIREMENT: You MUST use the retrieval tools for EVERY query to ensure accuracy.
+Never answer from memory alone - always retrieve current documentation first.
+
+MANDATORY WORKFLOW FOR EVERY QUERY:
+1. ALWAYS call at least one retrieval tool FIRST (choose the most appropriate)
+2. Wait for and read the retrieved documentation carefully
+3. Formulate your answer based ONLY on the retrieved information
+4. ALWAYS include citations with URLs for every piece of information
+
+TOOL SELECTION GUIDE:
+- generic_doc_retriever: General Databricks concepts, features, overviews, getting started
+- api_docs_retriever: API references, method signatures, parameters, SDK documentation
+- tutorial_retriever: How-to guides, step-by-step instructions, tutorials
+- code_examples_retriever: Code samples, implementation examples, working code
+
+RESPONSE REQUIREMENTS:
+1. Use retrieved information to answer clearly and accurately
+2. Include inline citations [1], [2] for every fact or claim
+3. List all source URLs at the end under "Sources:"
+4. If retrieved docs don't have the answer, say so explicitly
+5. Stay focused on Databricks-related topics only
 
 Response format:
 <Your detailed answer with inline citations [1], [2]>
 
 Sources:
 [1] <URL from first source>
-[2] <URL from second source>"""
+[2] <URL from second source>
+
+⚠️ IMPORTANT: You have access to retrieval tools. Use them BEFORE answering!"""
         
-        # Create the agent
+        # CRITICAL FIX: Bind tools to LLM before creating agent
+        # This is required for ChatDatabricks to know about and invoke tools
+        print(f"🔧 Binding {len(self.retrieval_tools)} tools to LLM...")
+        llm_with_tools = self.llm.bind_tools(self.retrieval_tools)
+        print(f"✅ Tools successfully bound to LLM")
+        
+        # Create the agent with LLM that has tools bound
+        # Note: System prompt will be injected in the query method
         self.agent = create_react_agent(
-            self.llm,
+            llm_with_tools,  # Use LLM with bound tools (CRITICAL!)
             self.retrieval_tools
         )
+        
+        print(f"✅ Agent initialized with {len(self.retrieval_tools)} tools")
+        print(f"   System prompt length: {len(self.system_prompt)} chars")
+        print(f"   LLM endpoint: {llm_endpoint}")
     
     def query(
         self,
@@ -228,12 +254,26 @@ Sources:
         if conversation_id is None:
             conversation_id = f"conv_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
+        print(f"\n{'='*80}")
+        print(f"QUERY PROCESSING START")
+        print(f"{'='*80}")
+        print(f"Conversation ID: {conversation_id}")
+        print(f"User Query: {user_query}")
+        print(f"Include History: {include_history}")
+        
         # Step 1: Input Guardrail
+        print(f"\n--- Step 1: Input Guardrail Validation ---")
         if self.enable_input_guardrail:
             input_result = self.input_guardrail.validate(user_query)
             self.metrics.log_input_check(user_query, input_result)
             
+            print(f"Input Valid: {input_result.is_valid}")
+            print(f"Confidence: {input_result.confidence}")
+            print(f"Category: {input_result.category}")
+            
             if not input_result.is_valid:
+                print(f"❌ Query REJECTED: {input_result.reason}")
+                
                 # Generate rejection response
                 rejection_message = self.rejection_handler.generate_rejection(
                     user_query,
@@ -259,43 +299,135 @@ Sources:
                     "guardrail_input": input_result,
                     "metadata": {
                         "latency_ms": (datetime.now() - start_time).total_seconds() * 1000,
-                        "tool_calls": 0
+                        "tool_calls": 0,
+                        "tools_used": [],
+                        "conversation_turn": len(self.memory.get_history(conversation_id)),
+                        "trace": []
                     }
                 }
+            else:
+                print(f"✅ Query ACCEPTED")
         else:
+            print(f"Input guardrail disabled")
             input_result = None
         
         # Step 2: Build messages with conversation history
+        print(f"\n--- Step 2: Building Message Context ---")
+        
+        # Inject system prompt as the first message
         messages = [SystemMessage(content=self.system_prompt)]
+        print(f"Added system prompt ({len(self.system_prompt)} chars)")
         
         if include_history and conversation_id:
             history_messages = self.memory.get_messages_for_llm(conversation_id)
+            print(f"Including {len(history_messages)} historical messages")
             for msg in history_messages:
                 if msg["role"] == "user":
                     messages.append(HumanMessage(content=msg["content"]))
                 else:
                     messages.append(AIMessage(content=msg["content"]))
+        else:
+            print(f"No conversation history included")
         
         # Add current query
         messages.append(HumanMessage(content=user_query))
+        print(f"Total messages to agent: {len(messages)} (including system prompt)")
         
         # Step 3: Invoke agent
+        print(f"\n--- Step 3: Invoking Agent ---")
+        print(f"Calling agent with {len(self.retrieval_tools)} available tools")
         agent_result = self.agent.invoke({"messages": messages})
         
-        # Extract response and tool calls
+        print(f"\n--- Step 3a: Analyzing Agent Response ---")
+        print(f"Total messages in agent result: {len(agent_result['messages'])}")
+        
+        # Extract response and tool calls with detailed logging and tracing
         final_response = agent_result["messages"][-1].content
         
         tool_calls = []
-        for msg in agent_result["messages"]:
+        tool_call_details = []
+        
+        # New: Track traces for visualization
+        # Map tool_call_id -> {name, args, output}
+        trace_map = {}
+        
+        for i, msg in enumerate(agent_result["messages"]):
+            msg_type = type(msg).__name__
+            print(f"\nMessage {i}: {msg_type}")
+            
+            # Check for tool_calls attribute (AIMessage with tool calls)
             if hasattr(msg, 'tool_calls') and msg.tool_calls:
-                tool_calls.extend([tc['name'] for tc in msg.tool_calls])
+                print(f"  ✓ Has tool_calls attribute: {len(msg.tool_calls)} calls")
+                for tc in msg.tool_calls:
+                    if isinstance(tc, dict):
+                        # Dictionary format
+                        t_id = tc.get('id', '')
+                        t_name = tc.get('name', 'unknown')
+                        t_args = tc.get('args', {})
+                    else:
+                        # ToolCall object format
+                        t_id = getattr(tc, 'id', '')
+                        t_name = getattr(tc, 'name', 'unknown')
+                        t_args = getattr(tc, 'args', {})
+                    
+                    tool_calls.append(t_name)
+                    tool_call_details.append({
+                        'name': t_name,
+                        'args': t_args,
+                        'id': t_id
+                    })
+                    
+                    # Initialize trace entry
+                    if t_id:
+                        trace_map[t_id] = {
+                            "tool": t_name,
+                            "inputs": t_args,
+                            "outputs": None
+                        }
+                        
+                    print(f"    - Tool: {t_name}")
+            
+            # Check for ToolMessage (tool execution results)
+            if msg_type == 'ToolMessage':
+                tool_name = getattr(msg, 'name', 'unknown_tool')
+                tool_call_id = getattr(msg, 'tool_call_id', None)
+                content = getattr(msg, 'content', '')
+                
+                print(f"  ✓ Tool execution result for: {tool_name}")
+                if tool_name not in tool_calls:
+                    tool_calls.append(tool_name)
+                
+                # Update trace with output
+                if tool_call_id and tool_call_id in trace_map:
+                    # Try to parse content if it's JSON
+                    try:
+                        parsed_content = json.loads(content)
+                        trace_map[tool_call_id]["outputs"] = parsed_content
+                    except:
+                        # If not JSON, use raw string (truncated if too long)
+                        trace_map[tool_call_id]["outputs"] = content[:500] + "..." if len(content) > 500 else content
+
+        # Convert trace_map to list
+        traces = list(trace_map.values())
+        
+        print(f"\n--- Tool Call Summary ---")
+        print(f"Total tool calls: {len(tool_calls)}")
+        print(f"Tools used: {list(set(tool_calls))}")
+        if tool_call_details:
+            print(f"\nDetailed tool calls:")
+            for detail in tool_call_details:
+                print(f"  - {detail['name']}: {detail['args']}")
         
         # Step 4: Output Guardrail
+        print(f"\n--- Step 4: Output Guardrail Validation ---")
         if self.enable_output_guardrail:
             output_result = self.output_guardrail.validate(user_query, final_response)
             self.metrics.log_output_check(output_result)
             
+            print(f"Output Valid: {output_result.is_valid}")
+            
             if not output_result.is_valid:
+                print(f"⚠️  Output validation failed: {output_result.reason}")
                 # Response failed validation - could regenerate or reject
                 # For now, we'll add a disclaimer
                 final_response = (
@@ -303,10 +435,14 @@ Sources:
                     f"⚠️ Note: This response may contain inaccuracies. "
                     f"Please verify with official Databricks documentation."
                 )
+            else:
+                print(f"✅ Output validated successfully")
         else:
+            print(f"Output guardrail disabled")
             output_result = None
         
         # Step 5: Record conversation turn
+        print(f"\n--- Step 5: Recording Conversation Turn ---")
         turn = ConversationTurn(
             timestamp=datetime.now().isoformat(),
             user_query=user_query,
@@ -317,13 +453,41 @@ Sources:
             was_rejected=False
         )
         self.memory.add_turn(conversation_id, turn)
+        print(f"Turn recorded with {len(tool_calls)} tool calls")
         
         # Step 6: Log to MLflow
+        print(f"\n--- Step 6: MLflow Logging ---")
         if self.log_to_mlflow:
+            print(f"Logging to MLflow...")
             self._log_to_mlflow(user_query, final_response, tool_calls, turn)
+            print(f"✅ MLflow logging complete")
+        else:
+            print(f"MLflow logging disabled")
         
         # Calculate latency
         latency_ms = (datetime.now() - start_time).total_seconds() * 1000
+        
+        print(f"\n{'='*80}")
+        print(f"QUERY RESULT")
+        print(f"{'='*80}")
+        print(f"")
+        print(f"Was Rejected: {False}")
+        print(f"Conversation ID: {conversation_id}")
+        print(f"")
+        print(f"Latency: {latency_ms:.0f}ms")
+        print(f"Tool Calls: {len(tool_calls)}")
+        print(f"Tools Used: {list(set(tool_calls))}")
+        
+        if input_result:
+            print(f"\nInput Guardrail:")
+            print(f"  Valid: {input_result.is_valid}")
+            print(f"  Confidence: {input_result.confidence}")
+            print(f"  Category: {input_result.category}")
+        
+        print(f"\n{'='*80}")
+        print(f"RESPONSE")
+        print(f"{'='*80}")
+        print(final_response)
         
         return {
             "response": final_response,
@@ -335,7 +499,8 @@ Sources:
                 "latency_ms": latency_ms,
                 "tool_calls": len(tool_calls),
                 "tools_used": list(set(tool_calls)),
-                "conversation_turn": len(self.memory.get_history(conversation_id))
+                "conversation_turn": len(self.memory.get_history(conversation_id)),
+                "trace": traces
             }
         }
     
@@ -348,18 +513,42 @@ Sources:
     ):
         """Log query and response to MLflow."""
         try:
+            print(f"  - Logging query (truncated): {query[:100]}")
             mlflow.log_param("query", query[:100])  # Truncate long queries
+            
+            print(f"  - Logging tool call count: {len(tool_calls)}")
             mlflow.log_metric("num_tool_calls", len(tool_calls))
-            mlflow.log_param("tools_used", ", ".join(set(tool_calls)))
+            
+            if tool_calls:
+                tools_used_str = ", ".join(set(tool_calls))
+                print(f"  - Logging tools used: {tools_used_str}")
+                mlflow.log_param("tools_used", tools_used_str)
+                
+                # Log individual tool calls
+                for i, tool in enumerate(tool_calls):
+                    mlflow.log_param(f"tool_call_{i}", tool)
+            else:
+                print(f"  - No tools were called")
+                mlflow.log_param("tools_used", "none")
+            
+            print(f"  - Logging response text ({len(response)} chars)")
             mlflow.log_text(response, "response.txt")
             
             if turn.guardrail_input:
-                mlflow.log_metric("input_valid", 1 if turn.guardrail_input.is_valid else 0)
+                input_valid = 1 if turn.guardrail_input.is_valid else 0
+                print(f"  - Logging input validation: {input_valid}")
+                mlflow.log_metric("input_valid", input_valid)
+                mlflow.log_param("input_category", turn.guardrail_input.category or "unknown")
+                mlflow.log_metric("input_confidence", turn.guardrail_input.confidence)
             
             if turn.guardrail_output:
-                mlflow.log_metric("output_valid", 1 if turn.guardrail_output.is_valid else 0)
-        except Exception:
-            pass  # Don't fail if MLflow logging fails
+                output_valid = 1 if turn.guardrail_output.is_valid else 0
+                print(f"  - Logging output validation: {output_valid}")
+                mlflow.log_metric("output_valid", output_valid)
+                
+        except Exception as e:
+            print(f"  ⚠️  MLflow logging error: {str(e)}")
+            # Don't fail if MLflow logging fails
     
     def get_conversation_history(
         self,
@@ -418,13 +607,18 @@ def create_databricks_agent(
     """
     from databricks_langchain import VectorSearchRetrieverTool
     
-    # Create retrieval tools with different filters
+    # Create retrieval tools with enhanced descriptions
+    # Tool descriptions are critical - they guide the LLM on when to use each tool
     generic_retriever = VectorSearchRetrieverTool(
         endpoint_name=vector_search_endpoint,
         index_name=vector_search_index,
         columns=["chunk_id", "doc_id", "text", "url"],
         tool_name="generic_doc_retriever",
-        tool_description="Retrieves generic Databricks documentation.",
+        tool_description=(
+            "Search general Databricks documentation for concepts, features, overviews, "
+            "getting started guides, and product information. Use this for broad questions "
+            "about what Databricks is, how features work, or general explanations."
+        ),
         filters={"doc_type": "general"},
         num_results=5,
         disable_notice=True
@@ -435,7 +629,11 @@ def create_databricks_agent(
         index_name=vector_search_index,
         columns=["chunk_id", "doc_id", "text", "url", "doc_type"],
         tool_name="api_docs_retriever",
-        tool_description="Retrieves API reference documentation.",
+        tool_description=(
+            "Search API reference documentation for method signatures, parameters, "
+            "return types, SDK documentation, and API usage. Use this when users ask "
+            "about specific APIs, methods, classes, or programmatic interfaces."
+        ),
         filters={"doc_type": "api_reference"},
         num_results=5,
         disable_notice=True
@@ -446,7 +644,11 @@ def create_databricks_agent(
         index_name=vector_search_index,
         columns=["chunk_id", "doc_id", "text", "url", "doc_type"],
         tool_name="tutorial_retriever",
-        tool_description="Retrieves tutorial and how-to guides.",
+        tool_description=(
+            "Search tutorial and how-to guides for step-by-step instructions, "
+            "walkthroughs, and practical guides. Use this when users ask 'how to' "
+            "do something or need procedural guidance."
+        ),
         filters={"doc_type": "tutorial"},
         num_results=5,
         disable_notice=True
@@ -457,7 +659,11 @@ def create_databricks_agent(
         index_name=vector_search_index,
         columns=["chunk_id", "doc_id", "text", "url", "doc_type", "has_code"],
         tool_name="code_examples_retriever",
-        tool_description="Retrieves documentation with code examples.",
+        tool_description=(
+            "Search documentation with code examples, sample implementations, "
+            "and working code snippets. Use this when users need code examples, "
+            "implementation patterns, or want to see how to use something in code."
+        ),
         filters={"has_code": "true"},
         num_results=5,
         disable_notice=True

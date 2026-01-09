@@ -1,0 +1,82 @@
+[
+    {
+        "question": "How do I create a cluster in Databricks?",
+        "ground_truth": "Navigate to the Compute page and click Create Cluster. Configure the cluster name, runtime version, and node types.",
+        "contexts": [
+            "To create a cluster in Databricks, go to the Compute page and click the Create Cluster button. You'll need to configure cluster settings including name, Databricks runtime version, and node types."
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What is Unity Catalog?",
+        "ground_truth": "Unity Catalog is a unified governance solution for data and AI assets on Databricks with centralized access control and auditing.",
+        "contexts": [
+            "Unity Catalog is a unified governance solution for data and AI assets on Databricks. It provides centralized access control, auditing, lineage, and data discovery across all workspaces."
+        ],
+        "answer": ""
+    },
+    {
+        "question": "How do I read a Delta table in PySpark?",
+        "ground_truth": "Use spark.read.format('delta').load('/path/to/table') or spark.table('catalog.schema.table_name') for Unity Catalog tables.",
+        "contexts": [
+            "To read a Delta table in PySpark: df = spark.read.format('delta').load('/path/to/delta/table'). For Unity Catalog tables, use: df = spark.table('catalog.schema.table_name')."
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What is Photon?",
+        "ground_truth": "Photon is a vectorized query engine that provides 2-3x faster SQL query performance using C++ and SIMD instructions.",
+        "contexts": [
+            "Photon is a vectorized query engine that provides extremely fast query performance for SQL workloads. It uses C++ for compute-intensive operations and can speed up queries by 2-3x compared to standard Spark."
+        ],
+        "answer": ""
+    },
+    {
+        "question": "How do I schedule a notebook to run daily?",
+        "ground_truth": "Create a job in Workflows > Jobs, add a notebook task, configure cluster, add a scheduled trigger with cron expression, and enable the job.",
+        "contexts": [
+            "To schedule a notebook: Create a job from Workflows > Jobs > Create Job. Add a task with type 'Notebook', select your notebook, configure cluster, click 'Add trigger' and select 'Scheduled', set schedule using cron syntax, and save."
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the different cluster modes in Databricks?",
+        "ground_truth": "Three modes: Standard (single-user, full Spark API), High Concurrency (multi-user, process isolation), and Single Node (lightweight, no workers).",
+        "contexts": [
+            "Databricks offers three cluster modes: Standard mode for single-user workloads, High Concurrency mode optimized for multiple users with process isolation, and Single Node mode for lightweight workloads on a single machine."
+        ],
+        "answer": ""
+    },
+    {
+        "question": "How do I optimize a Delta table?",
+        "ground_truth": "Use OPTIMIZE command to compact files, ZORDER BY for data colocation, enable auto-optimize properties, and use VACUUM to remove old files.",
+        "contexts": [
+            "To optimize Delta tables: Use OPTIMIZE command to compact small files, ZORDER BY to colocate related data, enable auto-optimize with table properties, and use VACUUM to remove old files."
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What is MLflow?",
+        "ground_truth": "MLflow is an open-source platform for managing the ML lifecycle including experimentation, reproducibility, and deployment, pre-installed in Databricks.",
+        "contexts": [
+            "MLflow is an open-source platform for managing the ML lifecycle, including experimentation, reproducibility, and deployment. Databricks provides managed MLflow with automatic experiment tracking and model registry."
+        ],
+        "answer": ""
+    },
+    {
+        "question": "How do I grant SELECT permission on a table in Unity Catalog?",
+        "ground_truth": "Use GRANT SELECT ON TABLE catalog.schema.table_name TO user@company.com or TO `group_name` for groups.",
+        "contexts": [
+            "To grant SELECT permission in Unity Catalog, use: GRANT SELECT ON TABLE catalog.schema.table_name TO user@company.com. You can also grant to groups: GRANT SELECT ON TABLE catalog.schema.table_name TO `group_name`."
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What is the difference between DBFS and Unity Catalog volumes?",
+        "ground_truth": "DBFS is workspace-scoped distributed file system. Unity Catalog volumes are account-scoped governed storage with ACLs, audit logging, and better security.",
+        "contexts": [
+            "DBFS is a distributed file system mounted into workspaces. Unity Catalog volumes are governed storage locations with fine-grained access control. Volumes support ACLs and audit logging, while DBFS is workspace-scoped and volumes are account-scoped."
+        ],
+        "answer": ""
+    }
+]

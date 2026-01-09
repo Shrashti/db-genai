@@ -1,0 +1,301 @@
+[
+    {
+        "user_input": "How do I create a cluster in Databricks?",
+        "retrieved_contexts": [
+            "To create a cluster in Databricks, navigate to the Compute page in your workspace. Click the 'Create Cluster' button. You'll need to configure: cluster name, Databricks runtime version, cluster mode (Standard or High Concurrency), node type for driver and workers, and autoscaling settings. You can also configure advanced options like init scripts, Spark configuration, and environment variables."
+        ],
+        "response": "",
+        "reference": "Go to Compute page, click Create Cluster, configure name, runtime version, cluster mode, node types, and autoscaling settings.",
+        "doc_url": "https://docs.databricks.com/en/clusters/create.html",
+        "question_type": "how-to",
+        "difficulty": "easy",
+        "expected_tools": [
+            "generic_doc_retriever",
+            "tutorial_retriever"
+        ]
+    },
+    {
+        "user_input": "What is Unity Catalog?",
+        "retrieved_contexts": [
+            "Unity Catalog is a unified governance solution for data and AI assets on Databricks. It provides centralized access control, auditing, lineage, and data discovery capabilities across all workspaces in your account. Unity Catalog enables you to manage permissions for data objects like catalogs, schemas, tables, and volumes from a single place."
+        ],
+        "response": "",
+        "reference": "Unity Catalog is Databricks' unified governance solution providing centralized access control, auditing, lineage, and data discovery for data and AI assets across workspaces.",
+        "doc_url": "https://docs.databricks.com/en/data-governance/unity-catalog/index.html",
+        "question_type": "conceptual",
+        "difficulty": "easy",
+        "expected_tools": [
+            "generic_doc_retriever"
+        ]
+    },
+    {
+        "user_input": "How do I configure single sign-on with Okta for my Databricks account?",
+        "retrieved_contexts": [
+            "To configure SSO with Okta: 1) Log in to the Databricks account console as an account admin. 2) Click Settings > Single sign-on. 3) Select OpenID Connect or SAML 2.0. 4) In Okta, create a new application integration. 5) Copy the client ID, client secret, and issuer URL from Okta. 6) Paste these values into the Databricks SSO configuration. 7) Click Save and Test SSO. 8) Enable SSO for your account."
+        ],
+        "response": "",
+        "reference": "Configure SSO by accessing account console Settings > Single sign-on, create Okta app integration, copy credentials (client ID, secret, issuer URL) to Databricks, test and enable.",
+        "doc_url": "https://docs.databricks.com/en/admin/account-settings-e2/single-sign-on/okta.html",
+        "question_type": "configuration",
+        "difficulty": "medium",
+        "expected_tools": [
+            "tutorial_retriever",
+            "generic_doc_retriever"
+        ]
+    },
+    {
+        "user_input": "What parameters does the dbutils.fs.ls() method accept?",
+        "retrieved_contexts": [
+            "The dbutils.fs.ls(dir) method lists the contents of a directory. It accepts one parameter: dir (required) - a string representing the path to the directory to list. The method returns a list of FileInfo objects, each containing name, path, size, and isDir attributes."
+        ],
+        "response": "",
+        "reference": "dbutils.fs.ls() accepts one parameter: dir (string) - the directory path to list. Returns list of FileInfo objects with name, path, size, and isDir attributes.",
+        "doc_url": "https://docs.databricks.com/en/dev-tools/databricks-utils.html",
+        "question_type": "api",
+        "difficulty": "easy",
+        "expected_tools": [
+            "api_docs_retriever"
+        ]
+    },
+    {
+        "user_input": "Show me an example of reading a Delta table using PySpark",
+        "retrieved_contexts": [
+            "To read a Delta table in PySpark: df = spark.read.format('delta').load('/path/to/delta/table'). Alternatively, you can use: df = spark.table('catalog.schema.table_name') for Unity Catalog tables, or df = spark.read.table('table_name') for tables in the default catalog."
+        ],
+        "response": "",
+        "reference": "Use spark.read.format('delta').load('/path/to/table') or spark.table('catalog.schema.table_name') for Unity Catalog tables.",
+        "doc_url": "https://docs.databricks.com/en/delta/tutorial.html",
+        "question_type": "code-example",
+        "difficulty": "easy",
+        "expected_tools": [
+            "code_examples_retriever"
+        ]
+    },
+    {
+        "user_input": "What are the different cluster modes available in Databricks?",
+        "retrieved_contexts": [
+            "Databricks offers three cluster modes: 1) Standard mode - for single-user workloads with full access to Spark APIs. 2) High Concurrency mode - optimized for multiple users with process isolation and fine-grained resource sharing. 3) Single Node mode - for lightweight workloads on a single machine without workers."
+        ],
+        "response": "",
+        "reference": "Three cluster modes: Standard (single-user, full Spark API), High Concurrency (multi-user, process isolation), Single Node (lightweight, no workers).",
+        "doc_url": "https://docs.databricks.com/en/clusters/cluster-modes.html",
+        "question_type": "conceptual",
+        "difficulty": "medium",
+        "expected_tools": [
+            "generic_doc_retriever"
+        ]
+    },
+    {
+        "user_input": "How do I enable audit logging for my Databricks workspace?",
+        "retrieved_contexts": [
+            "To enable audit logging: 1) You must be an account admin. 2) Configure an S3 bucket for log delivery. 3) Create IAM role with appropriate permissions. 4) In account console, go to Settings > Log delivery. 5) Create a new log delivery configuration specifying the S3 bucket, IAM role, and log type (AUDIT_LOGS). 6) Logs will be delivered to your S3 bucket within 15 minutes."
+        ],
+        "response": "",
+        "reference": "As account admin, configure S3 bucket and IAM role, then in account console Settings > Log delivery, create configuration with bucket, role, and AUDIT_LOGS type.",
+        "doc_url": "https://docs.databricks.com/en/admin/account-settings/audit-log-delivery.html",
+        "question_type": "configuration",
+        "difficulty": "hard",
+        "expected_tools": [
+            "tutorial_retriever"
+        ]
+    },
+    {
+        "user_input": "What is the difference between DBFS and Unity Catalog volumes?",
+        "retrieved_contexts": [
+            "DBFS (Databricks File System) is a distributed file system mounted into Databricks workspaces. Unity Catalog volumes are governed storage locations for non-tabular data with fine-grained access control. Key differences: Volumes support ACLs and audit logging, integrate with Unity Catalog governance, and provide better security. DBFS is workspace-scoped while volumes are account-scoped."
+        ],
+        "response": "",
+        "reference": "DBFS is workspace-scoped distributed file system. Unity Catalog volumes are account-scoped governed storage with ACLs, audit logging, and Unity Catalog integration for better security and governance.",
+        "doc_url": "https://docs.databricks.com/en/connect/unity-catalog/volumes.html",
+        "question_type": "conceptual",
+        "difficulty": "medium",
+        "expected_tools": [
+            "generic_doc_retriever"
+        ]
+    },
+    {
+        "user_input": "How do I create a Delta Live Tables pipeline?",
+        "retrieved_contexts": [
+            "To create a DLT pipeline: 1) Create a notebook with your DLT queries using @dlt.table or @dlt.view decorators. 2) In the Databricks UI, go to Workflows > Delta Live Tables. 3) Click Create Pipeline. 4) Specify pipeline name, notebook path, target schema, and cluster configuration. 5) Configure pipeline mode (Triggered or Continuous). 6) Click Create. You can then start the pipeline to process your data."
+        ],
+        "response": "",
+        "reference": "Create notebook with @dlt.table/@dlt.view decorators, go to Workflows > Delta Live Tables > Create Pipeline, configure name, notebook path, target schema, cluster, and mode, then create and start.",
+        "doc_url": "https://docs.databricks.com/en/delta-live-tables/tutorial-pipelines.html",
+        "question_type": "how-to",
+        "difficulty": "medium",
+        "expected_tools": [
+            "tutorial_retriever",
+            "code_examples_retriever"
+        ]
+    },
+    {
+        "user_input": "What is the purpose of init scripts in Databricks clusters?",
+        "retrieved_contexts": [
+            "Init scripts are shell scripts that run during cluster startup to install packages, configure system settings, or perform custom initialization tasks. They execute on each node before the Spark driver and workers start. Common uses include installing Python packages, setting environment variables, configuring logging, or mounting external storage."
+        ],
+        "response": "",
+        "reference": "Init scripts are shell scripts that run during cluster startup on each node before Spark starts, used for installing packages, configuring settings, setting environment variables, or custom initialization.",
+        "doc_url": "https://docs.databricks.com/en/init-scripts/index.html",
+        "question_type": "conceptual",
+        "difficulty": "easy",
+        "expected_tools": [
+            "generic_doc_retriever"
+        ]
+    },
+    {
+        "user_input": "Can you help me with my Python homework?",
+        "retrieved_contexts": [],
+        "response": "",
+        "reference": "This question is not related to Databricks documentation and should be rejected by input guardrails.",
+        "doc_url": "",
+        "question_type": "off-topic",
+        "difficulty": "easy",
+        "expected_tools": [],
+        "should_reject": true
+    },
+    {
+        "user_input": "How do I optimize a Delta table for better query performance?",
+        "retrieved_contexts": [
+            "To optimize Delta tables: 1) Use OPTIMIZE command to compact small files: OPTIMIZE table_name. 2) Use Z-ORDER BY to colocate related data: OPTIMIZE table_name ZORDER BY (column1, column2). 3) Enable auto-optimize with delta.autoOptimize.optimizeWrite and delta.autoOptimize.autoCompact table properties. 4) Partition tables on frequently filtered columns. 5) Use VACUUM to remove old files."
+        ],
+        "response": "",
+        "reference": "Use OPTIMIZE to compact files, ZORDER BY for data colocation, enable auto-optimize properties, partition on filtered columns, and VACUUM to remove old files.",
+        "doc_url": "https://docs.databricks.com/en/delta/optimize.html",
+        "question_type": "how-to",
+        "difficulty": "medium",
+        "expected_tools": [
+            "tutorial_retriever",
+            "generic_doc_retriever"
+        ]
+    },
+    {
+        "user_input": "What authentication methods are supported for Databricks REST API?",
+        "retrieved_contexts": [
+            "Databricks REST API supports multiple authentication methods: 1) Personal Access Tokens (PAT) - recommended for users. 2) OAuth 2.0 tokens - for machine-to-machine authentication. 3) Azure Active Directory tokens - for Azure Databricks. 4) Service Principal credentials - for automated workflows. Use Authorization: Bearer <token> header for API requests."
+        ],
+        "response": "",
+        "reference": "Supported methods: Personal Access Tokens (PAT), OAuth 2.0 tokens, Azure AD tokens, Service Principal credentials. Use Authorization: Bearer <token> header.",
+        "doc_url": "https://docs.databricks.com/en/dev-tools/auth.html",
+        "question_type": "factual",
+        "difficulty": "medium",
+        "expected_tools": [
+            "api_docs_retriever",
+            "generic_doc_retriever"
+        ]
+    },
+    {
+        "user_input": "Show me how to create a Databricks job using the Jobs API",
+        "retrieved_contexts": [
+            "To create a job via API: POST /api/2.1/jobs/create with JSON body containing: name, tasks (array with task_key, notebook_task/spark_python_task, etc.), job_clusters or existing_cluster_id, schedule (optional), and email_notifications. Example: {\"name\": \"My Job\", \"tasks\": [{\"task_key\": \"task1\", \"notebook_task\": {\"notebook_path\": \"/path/to/notebook\"}, \"new_cluster\": {...}}]}"
+        ],
+        "response": "",
+        "reference": "POST to /api/2.1/jobs/create with JSON containing name, tasks array (with task_key, notebook_task/spark_python_task, cluster config), optional schedule and notifications.",
+        "doc_url": "https://docs.databricks.com/en/workflows/jobs/jobs-api.html",
+        "question_type": "api",
+        "difficulty": "hard",
+        "expected_tools": [
+            "api_docs_retriever",
+            "code_examples_retriever"
+        ]
+    },
+    {
+        "user_input": "What is Photon and how does it improve query performance?",
+        "retrieved_contexts": [
+            "Photon is a vectorized query engine that provides extremely fast query performance for SQL workloads. It uses C++ for compute-intensive operations, SIMD instructions for parallel processing, and optimized memory management. Photon can speed up queries by 2-3x compared to standard Spark. It's available on SQL warehouses and certain cluster types, enabled automatically for supported workloads."
+        ],
+        "response": "",
+        "reference": "Photon is a vectorized C++ query engine using SIMD and optimized memory management, providing 2-3x faster SQL queries. Available on SQL warehouses and certain clusters, enabled automatically.",
+        "doc_url": "https://docs.databricks.com/en/compute/photon.html",
+        "question_type": "conceptual",
+        "difficulty": "medium",
+        "expected_tools": [
+            "generic_doc_retriever"
+        ]
+    },
+    {
+        "user_input": "How do I grant SELECT permission on a table to a user in Unity Catalog?",
+        "retrieved_contexts": [
+            "To grant SELECT permission in Unity Catalog, use the GRANT SQL statement: GRANT SELECT ON TABLE catalog.schema.table_name TO user@company.com. You can also grant to groups: GRANT SELECT ON TABLE catalog.schema.table_name TO `group_name`. Permissions can be granted at catalog, schema, or table level and are inherited hierarchically."
+        ],
+        "response": "",
+        "reference": "Use GRANT SELECT ON TABLE catalog.schema.table_name TO user@company.com for users or TO `group_name` for groups. Permissions can be granted at catalog/schema/table level with hierarchical inheritance.",
+        "doc_url": "https://docs.databricks.com/en/data-governance/unity-catalog/manage-privileges/index.html",
+        "question_type": "how-to",
+        "difficulty": "easy",
+        "expected_tools": [
+            "tutorial_retriever",
+            "api_docs_retriever"
+        ]
+    },
+    {
+        "user_input": "What are the requirements for enabling serverless SQL warehouses?",
+        "retrieved_contexts": [
+            "Serverless SQL warehouse requirements: 1) Premium or Enterprise tier account. 2) Workspace must be in a supported region. 3) Account must have serverless enabled by Databricks. 4) Workspace must be on the E2 architecture (not legacy). 5) Unity Catalog must be enabled. Serverless provides instant compute with no cluster management and automatic scaling."
+        ],
+        "response": "",
+        "reference": "Requirements: Premium/Enterprise tier, supported region, serverless enabled on account, E2 architecture workspace, Unity Catalog enabled. Provides instant compute and auto-scaling.",
+        "doc_url": "https://docs.databricks.com/en/sql/admin/serverless.html",
+        "question_type": "factual",
+        "difficulty": "medium",
+        "expected_tools": [
+            "generic_doc_retriever"
+        ]
+    },
+    {
+        "user_input": "How do I monitor cluster performance and resource utilization?",
+        "retrieved_contexts": [
+            "Monitor cluster performance using: 1) Ganglia metrics UI - CPU, memory, network, disk I/O. 2) Spark UI - job stages, tasks, executors. 3) Cluster event logs - startup, termination, autoscaling events. 4) System tables - query history, cluster usage. 5) Third-party monitoring via Prometheus/Grafana integration. Access metrics from cluster details page or via REST API."
+        ],
+        "response": "",
+        "reference": "Use Ganglia UI for system metrics, Spark UI for job metrics, cluster event logs, system tables for usage, or integrate Prometheus/Grafana. Access from cluster details or REST API.",
+        "doc_url": "https://docs.databricks.com/en/clusters/monitor.html",
+        "question_type": "how-to",
+        "difficulty": "medium",
+        "expected_tools": [
+            "tutorial_retriever",
+            "generic_doc_retriever"
+        ]
+    },
+    {
+        "user_input": "What is the difference between a notebook and a workspace file?",
+        "retrieved_contexts": [
+            "Notebooks are interactive documents containing code, visualizations, and markdown. They support multiple languages (Python, SQL, Scala, R) and can be executed cell-by-cell. Workspace files are any files stored in the workspace file system, including notebooks, Python scripts, JARs, and other assets. Notebooks have .ipynb extension and special execution capabilities, while workspace files are general-purpose storage."
+        ],
+        "response": "",
+        "reference": "Notebooks are interactive .ipynb documents with code, visualizations, markdown, multi-language support, and cell-by-cell execution. Workspace files are general-purpose storage for any files including notebooks, scripts, JARs.",
+        "doc_url": "https://docs.databricks.com/en/notebooks/index.html",
+        "question_type": "conceptual",
+        "difficulty": "easy",
+        "expected_tools": [
+            "generic_doc_retriever"
+        ]
+    },
+    {
+        "user_input": "How do I schedule a notebook to run daily at 2 AM?",
+        "retrieved_contexts": [
+            "To schedule a notebook: 1) Create a job from Workflows > Jobs > Create Job. 2) Add a task with type 'Notebook'. 3) Select your notebook path. 4) Configure cluster (new or existing). 5) Click 'Add trigger' and select 'Scheduled'. 6) Set schedule using cron syntax: 0 2 * * * for daily at 2 AM. 7) Set timezone. 8) Save and enable the job."
+        ],
+        "response": "",
+        "reference": "Create job in Workflows > Jobs, add Notebook task, configure cluster, add Scheduled trigger with cron '0 2 * * *', set timezone, save and enable.",
+        "doc_url": "https://docs.databricks.com/en/workflows/jobs/schedule-jobs.html",
+        "question_type": "how-to",
+        "difficulty": "medium",
+        "expected_tools": [
+            "tutorial_retriever"
+        ]
+    },
+    {
+        "user_input": "What is MLflow and how is it integrated with Databricks?",
+        "retrieved_contexts": [
+            "MLflow is an open-source platform for managing the ML lifecycle, including experimentation, reproducibility, and deployment. Databricks provides managed MLflow with: automatic experiment tracking, model registry, model serving, and integration with notebooks and jobs. MLflow is pre-installed and configured in Databricks workspaces. Use mlflow.log_param(), mlflow.log_metric(), and mlflow.log_model() to track experiments."
+        ],
+        "response": "",
+        "reference": "MLflow manages ML lifecycle (experimentation, reproducibility, deployment). Databricks provides managed MLflow with auto-tracking, model registry, serving, pre-installed in workspaces. Use mlflow.log_* functions.",
+        "doc_url": "https://docs.databricks.com/en/mlflow/index.html",
+        "question_type": "conceptual",
+        "difficulty": "medium",
+        "expected_tools": [
+            "generic_doc_retriever"
+        ]
+    }
+]
